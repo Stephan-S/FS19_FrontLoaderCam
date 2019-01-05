@@ -1,0 +1,50 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="no" ?>
+<modDesc descVersion="40">
+    <author>Balu</author>
+	<title>
+		<en>FrontLoaderCam</en>
+		<de>FrontLoaderCam</de>
+		<it>FrontLoaderCam</it>
+	</title>
+	<description>
+		<en>
+<![CDATA[ToDO
+]]>
+		</en>
+		<de>
+<![CDATA[ToDO
+]]>
+	   </de>
+		<it>
+<![CDATA[ToDO
+]]>
+	   </it>
+	</description>
+    <version>1.0.0</version>
+	<multiplayer supported="true"/>   
+	<iconFilename>store.dds</iconFilename>
+    <extraSourceFiles>
+        <sourceFile filename="register.lua" />
+    </extraSourceFiles>
+	
+	<l10n>
+		<text name="input_FrontLoaderCam_Toggle">					<en>FLCam: FrontLoaderCam On/Off</en>  			<de>FLCam: FrontLader Kamera an/aus</de>		<it>FLCam: FrontLoaderCam On/Off</it>						</text>
+		<text name="input_FrontLoaderCam_MoveCam">					<en>FLCam: FrontLoaderCam Enable Moving</en>  			<de>FLCam: FrontLader Kamera bewegen</de>		<it>FLCam: FrontLoaderCam Move</it>						</text>
+	</l10n>
+	
+	<actions>
+		<action name="FrontLoaderCam_Toggle"    category="VEHICLE"/>
+		<action name="FrontLoaderCam_MoveCam"    category="VEHICLE"/>
+	</actions>
+	
+	<inputBindings>			
+		<actionBinding action="FrontLoaderCam_Toggle">	
+			<binding device="KB_MOUSE_DEFAULT" input="KEY_KP_9" />
+		</actionBinding>
+		<actionBinding action="FrontLoaderCam_MoveCam">	
+			<binding device="KB_MOUSE_DEFAULT" input="KEY_KP_7" />
+		</actionBinding>
+	</inputBindings>
+	
+</modDesc>
+
