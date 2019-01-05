@@ -36,7 +36,7 @@ if g_specializationManager:getSpecializationByName("FrontLoaderCam") == nil then
           end 
         end 
         if isDrivable and isEnterable and hasMotor then 
-          print("INFO: attached specialization 'FrontLoaderCam' to vehicleType '" .. tostring(i) .. "'")
+          --print("INFO: attached specialization 'FrontLoaderCam' to vehicleType '" .. tostring(i) .. "'")
           typeDef.specializationsByName["FrontLoaderCam"] = FrontLoaderCam
           table.insert(typeDef.specializationNames, "FrontLoaderCam")
           table.insert(typeDef.specializations, FrontLoaderCam)  
@@ -48,7 +48,6 @@ end
 
 function FrontLoaderCam_Register:loadMap(name)
 	print("--> loaded FrontLoaderCam version " .. self.version .. " (by Stephan) <--");
-
 end;
 
 function FrontLoaderCam_Register:deleteMap()

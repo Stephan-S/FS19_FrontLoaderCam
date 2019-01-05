@@ -1,48 +1,63 @@
 ﻿<?xml version="1.0" encoding="utf-8" standalone="no" ?>
-<modDesc descVersion="40">
+<modDesc descVersion="41">
     <author>Balu</author>
 	<title>
 		<en>FrontLoaderCam</en>
 		<de>FrontLoaderCam</de>
-		<it>FrontLoaderCam</it>
 	</title>
 	<description>
 		<en>
-<![CDATA[ToDO
+<![CDATA[Adds a new camera view to vehicles with a frontloader attachement, to help with precise movements.
+
+Usage:
+FLCam On/Off: Toggle between frontloader camera and last active view (internal or external)
+FLCam MoveCam: Hold to enable moving the camera in all directions. 
+		x (Look-left,right-axis),
+		y (Move-player-forward/backward-axis) and
+		z (Look-up-down-axis)
 ]]>
 		</en>
 		<de>
-<![CDATA[ToDO
+<![CDATA[Fügt eine neue Kameraansicht zu Fahrzeugen mit Frontlader Kupplung hinzu.
+Hilfreich um möglichst präzise mit dem Frontlader arbeiten zu können.
+
+Bedienung:
+FLCam FrontLader Kamera an/aus: Wechseln zwischen Frontlader Kamera und zuletzt aktiver Perspektive.
+FLCam FrontLader Kamera bewegen: Gedrückt halten um die Frontlader Kamera auf die gewünschte Position zu bewegen.  
+		x - (Links,rechts): 		Umschauen links rechts,
+		y - (Hoch,runter):  		Spieler vorwärts/rückwärts bewegen
+		z - (Vorwärts, rückwärts):	Umschauen hoch, runter
 ]]>
 	   </de>
-		<it>
-<![CDATA[ToDO
-]]>
-	   </it>
 	</description>
-    <version>1.0.0</version>
-	<multiplayer supported="true"/>   
+	
+    <version>1.0.0.0</version>
+	
+	<multiplayer supported="true"/>  
+	
 	<iconFilename>store.dds</iconFilename>
+	
     <extraSourceFiles>
         <sourceFile filename="register.lua" />
     </extraSourceFiles>
-	
 	<l10n>
-		<text name="input_FrontLoaderCam_Toggle">					<en>FLCam: FrontLoaderCam On/Off</en>  			<de>FLCam: FrontLader Kamera an/aus</de>		<it>FLCam: FrontLoaderCam On/Off</it>						</text>
-		<text name="input_FrontLoaderCam_MoveCam">					<en>FLCam: FrontLoaderCam Enable Moving</en>  			<de>FLCam: FrontLader Kamera bewegen</de>		<it>FLCam: FrontLoaderCam Move</it>						</text>
+		<text name="input_FrontLoaderCam_Toggle">	<en>FLCam: FrontLoaderCam On/Off</en>  			<de>FLCam: FrontLader Kamera an/aus</de>	</text>
+		<text name="input_FrontLoaderCam_MoveCam">	<en>FLCam: FrontLoaderCam Enable Moving</en>  	<de>FLCam: FrontLader Kamera bewegen</de>	</text>
 	</l10n>
 	
 	<actions>
 		<action name="FrontLoaderCam_Toggle"    category="VEHICLE"/>
-		<action name="FrontLoaderCam_MoveCam"    category="VEHICLE"/>
+		<action name="FrontLoaderCam_MoveCam" 	category="VEHICLE"/>
 	</actions>
 	
-	<inputBindings>			
-		<actionBinding action="FrontLoaderCam_Toggle">	
-			<binding device="KB_MOUSE_DEFAULT" input="KEY_KP_9" />
+	<inputBindings>
+		<actionBinding action="FrontLoaderCam_Toggle">
+			<binding device="KB_MOUSE_DEFAULT" input="KEY_KP_9" axisComponent="+" neutralInput="0" index="1"/>
+			<binding device="0_XINPUT_GAMEPAD" input="BUTTON_5 BUTTON_17" axisComponent="+" neutralInput="0" index="1"/>
 		</actionBinding>
-		<actionBinding action="FrontLoaderCam_MoveCam">	
-			<binding device="KB_MOUSE_DEFAULT" input="KEY_KP_7" />
+		<actionBinding action="FrontLoaderCam_MoveCam">
+			<binding device="KB_MOUSE_DEFAULT" input="KEY_KP_7" axisComponent="+" neutralInput="0" index="1"/>
+			<binding device="0_XINPUT_GAMEPAD" input="BUTTON_6" axisComponent="+" neutralInput="0" index="1"/>
 		</actionBinding>
 	</inputBindings>
 	
