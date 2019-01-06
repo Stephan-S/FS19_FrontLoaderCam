@@ -10,10 +10,10 @@ FrontLoaderCam.Version = "1.0.0";
 FrontLoaderCam.config_changed = false;
 FrontLoaderCam.actions             = { 'FrontLoaderCam_Toggle', 'FrontLoaderCam_MoveCam'}
 FrontLoaderCam.ViewActions             = { 'AXIS_LOOK_UPDOWN_VEHICLE', 'AXIS_LOOK_LEFTRIGHT_VEHICLE', 'AXIS_MOVE_FORWARD_PLAYER'}
-
+local myName = "FS19_FrontLoaderCam";
 
 FrontLoaderCam.directory = g_currentModDirectory;
-
+FrontLoaderCam.confDirectory = getUserProfileAppPath().. "modsSettings/FS19_FrontLoaderCam/"; 
 
 function FrontLoaderCam:prerequisitesPresent(specializations)
     return true;
@@ -29,7 +29,7 @@ end;
 function FrontLoaderCam.registerEventListeners(vehicleType)
   --print("-> registerEventListeners ")
     
-  for _,n in pairs( { "onUpdate", "onRegisterActionEvents" } ) do
+  for _,n in pairs( { "onUpdate", "onRegisterActionEvents", "onDelete" } ) do
     SpecializationUtil.registerEventListener(vehicleType, n, FrontLoaderCam)
   end 
 end
@@ -140,6 +140,10 @@ end
 function FrontLoaderCam:onLeave()
 end;
 
+function FrontLoaderCam:onDelete()
+	FrontLoaderCam:writeConfig();
+end;
+
 function init(self)	
 	self.lastInputValues =  {};
 	self.lastInputValues.upDown = 0;
@@ -149,6 +153,13 @@ function init(self)
 	
 	if self.flc == nil then
 		self.flc = {};
+	end;
+	
+	if g_currentMission.FrontLoaderCamSettings == nil then
+		g_currentMission.FrontLoaderCamSettings = {};		
+		g_currentMission.FrontLoaderCamSettings.registeredVehicles = {};
+		g_currentMission.FrontLoaderCamSettings.registeredVehicleAttributes = {};
+		FrontLoaderCam:readConfig();
 	end;
 	
 	self.storedCam = getCamera();
@@ -204,8 +215,42 @@ function init(self)
 			self.flc.cam = false;				
 		end;
 	--end;
-	
-	self.trafficVehicle = nil;
+		
+	--register Vehicle in global array for savefile:
+	if g_currentMission.FrontLoaderCamSettings ~= nil then  
+		local entryExists = false;
+		local count = 0;
+		for _, vehicle in ipairs(g_currentMission.FrontLoaderCamSettings.registeredVehicles) do
+			if vehicle == self:getName():gsub("%s+", "") then
+				entryExists = true;
+			end;
+			count = count +1;
+		end;	
+		
+		local roll;
+		local pitch;
+		local yaw;
+		local vName = self:getName():gsub("%s+", "");
+		if not entryExists then
+			g_currentMission.FrontLoaderCamSettings.registeredVehicles[count+1] = vName;
+			g_currentMission.FrontLoaderCamSettings.registeredVehicleAttributes[vName] = {};
+			g_currentMission.FrontLoaderCamSettings.registeredVehicleAttributes[vName].camOffsetX = self.frontLoaderCamOffsetX;
+			g_currentMission.FrontLoaderCamSettings.registeredVehicleAttributes[vName].camOffsetY = self.frontLoaderCamOffsetY;
+			g_currentMission.FrontLoaderCamSettings.registeredVehicleAttributes[vName].camOffsetZ = self.frontLoaderCamOffsetZ;
+			pitch, yaw, roll = getRotation(self.frontLoaderCam);
+			g_currentMission.FrontLoaderCamSettings.registeredVehicleAttributes[vName].camRoll = roll;
+			g_currentMission.FrontLoaderCamSettings.registeredVehicleAttributes[vName].camPitch = pitch;
+			g_currentMission.FrontLoaderCamSettings.registeredVehicleAttributes[vName].camYaw = yaw;
+		else			
+			self.frontLoaderCamOffsetX = g_currentMission.FrontLoaderCamSettings.registeredVehicleAttributes[vName].camOffsetX;
+			self.frontLoaderCamOffsetY = g_currentMission.FrontLoaderCamSettings.registeredVehicleAttributes[vName].camOffsetY;
+			self.frontLoaderCamOffsetZ = g_currentMission.FrontLoaderCamSettings.registeredVehicleAttributes[vName].camOffsetZ;
+			roll = g_currentMission.FrontLoaderCamSettings.registeredVehicleAttributes[vName].camRoll;
+			pitch = g_currentMission.FrontLoaderCamSettings.registeredVehicleAttributes[vName].camPitch;
+			yaw = g_currentMission.FrontLoaderCamSettings.registeredVehicleAttributes[vName].camYaw;
+			setRotation(self.frontLoaderCam, pitch, yaw, roll);
+		end;	
+	end;
 end;
 
 function FrontLoaderCam:newMouseEvent(superFunc,posX, posY, isDown, isUp, button)
@@ -319,6 +364,16 @@ function FrontLoaderCam:onUpdate(dt)
 				setRotation(self.frontLoaderCam, pitch, yaw, roll);
 				
 				setCamera(self.frontLoaderCam);
+				
+				local vName = self:getName():gsub("%s+", "");
+				if g_currentMission.FrontLoaderCamSettings.registeredVehicleAttributes[vName] ~= nil then
+					g_currentMission.FrontLoaderCamSettings.registeredVehicleAttributes[vName].camOffsetX = self.frontLoaderCamOffsetX;
+					g_currentMission.FrontLoaderCamSettings.registeredVehicleAttributes[vName].camOffsetY = self.frontLoaderCamOffsetY;
+					g_currentMission.FrontLoaderCamSettings.registeredVehicleAttributes[vName].camOffsetZ = self.frontLoaderCamOffsetZ;
+					g_currentMission.FrontLoaderCamSettings.registeredVehicleAttributes[vName].camRoll = roll;
+					g_currentMission.FrontLoaderCamSettings.registeredVehicleAttributes[vName].camPitch = pitch;
+					g_currentMission.FrontLoaderCamSettings.registeredVehicleAttributes[vName].camYaw = yaw;
+				end;					
 			else
 				if (self.restoreLastCam == true) then
 					self.restoreLastCam = false;
@@ -326,11 +381,10 @@ function FrontLoaderCam:onUpdate(dt)
 					if self.spec_enterable ~= nil then
 						if self.flc.lastCamIndex ~= nil then
 							self.spec_enterable:setActiveCameraIndex(self.flc.lastCamIndex);
-							--print("Activated camera");					
 						end;
 					end;	
 				end;			
-			end;
+			end;		
 		end;
 	end;
 end;
@@ -373,7 +427,110 @@ function FrontLoaderCam:angleBetween(vec1, vec2)
 end
 
 function mySelf(obj)
+  --return obj:getName();
   return " (rootNode: " .. obj.rootNode .. ", typeName: " .. obj.typeName .. ", typeDesc: " .. obj.typeDesc .. ")"
+end
+
+function FrontLoaderCam:writeConfig()
+  --print("-> writeConfig ");
+
+  -- skip on dedicated servers
+  if g_dedicatedServerInfo ~= nil then
+    return
+  end
+
+  createFolder(getUserProfileAppPath().. "modsSettings/");
+  createFolder(FrontLoaderCam.confDirectory);
+
+  local file = FrontLoaderCam.confDirectory..myName..".xml"
+  local xml
+  local groupNameTag
+  local group
+  xml = createXMLFile("FS19_FrontLoaderCam_XML", file, "FS19_FrontLoaderCamSettings");
+	  
+	if g_currentMission.FrontLoaderCamSettings ~= nil then  
+		--count vehicles:
+		local vehicleCount = 0;
+		for _, vehicle in ipairs(g_currentMission.FrontLoaderCamSettings.registeredVehicles) do
+			vehicleCount = vehicleCount + 1;
+		end;		
+		setXMLFloat(xml,  "FS19_FrontLoaderCamSettings.vehicleCount(0)#count", vehicleCount);			
+		
+		--write vehicle Names
+		local currentVehicleNameIndex = 1;		
+		for _, vehicle in ipairs(g_currentMission.FrontLoaderCamSettings.registeredVehicles) do
+			setXMLString(xml, "FS19_FrontLoaderCamSettings.vehicleName" .. currentVehicleNameIndex .. "(0)#name", g_currentMission.FrontLoaderCamSettings.registeredVehicles[currentVehicleNameIndex]);
+			currentVehicleNameIndex = currentVehicleNameIndex + 1;
+		end;		
+	
+		--write vehicle Attributes
+		for _, vehicle in ipairs(g_currentMission.FrontLoaderCamSettings.registeredVehicles) do			
+			group = "vehicle.v" .. vehicle:gsub("%s+", "")
+			groupNameTag = string.format("FS19_FrontLoaderCamSettings.%s(%d)", group, 0) 
+			setXMLFloat(xml,  groupNameTag .. "#camOffsetX", g_currentMission.FrontLoaderCamSettings.registeredVehicleAttributes[vehicle].camOffsetX);
+			setXMLFloat(xml,  groupNameTag .. "#camOffsetY", g_currentMission.FrontLoaderCamSettings.registeredVehicleAttributes[vehicle].camOffsetY);
+			setXMLFloat(xml,  groupNameTag .. "#camOffsetZ", g_currentMission.FrontLoaderCamSettings.registeredVehicleAttributes[vehicle].camOffsetZ);
+			setXMLFloat(xml,  groupNameTag .. "#camRoll", g_currentMission.FrontLoaderCamSettings.registeredVehicleAttributes[vehicle].camRoll);
+			setXMLFloat(xml,  groupNameTag .. "#camPitch", g_currentMission.FrontLoaderCamSettings.registeredVehicleAttributes[vehicle].camPitch);
+			setXMLFloat(xml,  groupNameTag .. "#camYaw", g_currentMission.FrontLoaderCamSettings.registeredVehicleAttributes[vehicle].camYaw);
+			--print("--> wrote values for '"..vehicle.."'. x: ".. g_currentMission.FrontLoaderCamSettings.registeredVehicleAttributes[vehicle].camOffsetX ..", y: "..g_currentMission.FrontLoaderCamSettings.registeredVehicleAttributes[vehicle].camOffsetY..", z: "..g_currentMission.FrontLoaderCamSettings.registeredVehicleAttributes[vehicle].camOffsetZ);
+		end
+	end;
+  
+  saveXMLFile(xml)
+end
+
+function FrontLoaderCam:readConfig()
+	--print("-> readConfig ")
+
+	-- skip on dedicated servers
+	if g_dedicatedServerInfo ~= nil then
+	return
+	end
+
+	local camOffsetX
+	local camOffsetY
+	local camOffsetZ
+	local camRoll
+	local camPitch
+	local camYaw
+
+	local file = FrontLoaderCam.confDirectory..myName..".xml"
+	local xml
+	if not fileExists(file) then
+		FrontLoaderCam:writeConfig()
+	else
+		-- load existing XML file
+		xml = loadXMLFile("FS19_FrontLoaderCam_XML", file, "FS19_FrontLoaderCamSettings");
+		
+		if g_currentMission.FrontLoaderCamSettings ~= nil then  
+			local vehicleCount = getXMLFloat(xml,  "FS19_FrontLoaderCamSettings.vehicleCount(0)#count");
+						
+			for i=1, (vehicleCount+1) do
+				local vehicleName = getXMLString(xml, "FS19_FrontLoaderCamSettings.vehicleName" .. i .. "#name");
+				g_currentMission.FrontLoaderCamSettings.registeredVehicles[i] = vehicleName;
+			end;
+		
+			for _, vehicle in ipairs(g_currentMission.FrontLoaderCamSettings.registeredVehicles) do
+				group = "vehicle.v" .. vehicle:gsub("%s+", "")
+				groupNameTag = string.format("FS19_FrontLoaderCamSettings.%s(%d)", group, 0) 
+				camOffsetX =  	getXMLFloat(xml, groupNameTag.. "#camOffsetX")	
+				camOffsetY =  	getXMLFloat(xml, groupNameTag.. "#camOffsetY")		
+				camOffsetZ =	getXMLFloat(xml, groupNameTag.. "#camOffsetZ")	
+				camRoll =  		getXMLFloat(xml, groupNameTag.. "#camRoll")		
+				camPitch =  	getXMLFloat(xml, groupNameTag.. "#camPitch")			
+				camYaw =  		getXMLFloat(xml, groupNameTag.. "#camYaw")	
+
+				g_currentMission.FrontLoaderCamSettings.registeredVehicleAttributes[vehicle] = {};
+				g_currentMission.FrontLoaderCamSettings.registeredVehicleAttributes[vehicle].camOffsetX = camOffsetX;
+				g_currentMission.FrontLoaderCamSettings.registeredVehicleAttributes[vehicle].camOffsetY = camOffsetY;
+				g_currentMission.FrontLoaderCamSettings.registeredVehicleAttributes[vehicle].camOffsetZ = camOffsetZ;
+				g_currentMission.FrontLoaderCamSettings.registeredVehicleAttributes[vehicle].camRoll = camRoll;
+				g_currentMission.FrontLoaderCamSettings.registeredVehicleAttributes[vehicle].camPitch = camPitch;
+				g_currentMission.FrontLoaderCamSettings.registeredVehicleAttributes[vehicle].camYaw = camYaw;
+			end
+		end
+	end;
 end
 
 function bool_to_number(value)
