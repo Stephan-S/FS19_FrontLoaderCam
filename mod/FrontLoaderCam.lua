@@ -27,7 +27,7 @@ function FrontLoaderCam:loadMap(name)
 end;
 
 function FrontLoaderCam.registerEventListeners(vehicleType)
-  print("-> registerEventListeners ")
+  --print("-> registerEventListeners ")
     
   for _,n in pairs( { "onUpdate", "onRegisterActionEvents" } ) do
     SpecializationUtil.registerEventListener(vehicleType, n, FrontLoaderCam)
@@ -108,7 +108,14 @@ function FrontLoaderCam:onActionCall(actionName, keyStatus, arg4, arg5, arg6)
 	if actionName == "FrontLoaderCam_Toggle" then
 		if self.flc.cam == false then		
 			self.flc.cam = true;
-			self.storedCam = getCamera();		
+			self.storedCam = getCamera();
+			if self.spec_enterable ~= nil then
+				if self.spec_enterable.activeCamera ~= nil then
+					self.flc.lastCamIndex = self.spec_enterable.camIndex;
+					self.spec_enterable.activeCamera:onDeactivate();
+					--print("Deactivated camera");					
+				end;
+			end;			
 		else
 			self.flc.cam = false;
 			self.restoreLastCam = true;			
@@ -143,7 +150,7 @@ function init(self)
 	if self.flc == nil then
 		self.flc = {};
 	end;
-
+	
 	self.storedCam = getCamera();
 	self.restoreLastCam = false;
 	
@@ -316,6 +323,12 @@ function FrontLoaderCam:onUpdate(dt)
 				if (self.restoreLastCam == true) then
 					self.restoreLastCam = false;
 					setCamera(self.storedCam);
+					if self.spec_enterable ~= nil then
+						if self.flc.lastCamIndex ~= nil then
+							self.spec_enterable:setActiveCameraIndex(self.flc.lastCamIndex);
+							--print("Activated camera");					
+						end;
+					end;	
 				end;			
 			end;
 		end;
