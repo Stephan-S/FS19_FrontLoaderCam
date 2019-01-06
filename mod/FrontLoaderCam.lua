@@ -54,32 +54,45 @@ function FrontLoaderCam:onRegisterActionEvents(isSelected, isOnActiveVehicle)
     else  
       self:clearActionEventsTable( self.ActionEvents )
     end 
-    
-    -- attach our actions
-    for _ ,actionName in pairs(FrontLoaderCam.actions) do
-		local __, eventName
-		if isOnActiveVehicle then
-			local toggleButton = false;
-			if actionName == "FrontLoaderCam_MoveCam" then
-				toggleButton = true;
+	
+	local frontLoaderDetected = false;
+	local attacherJoints = self:getAttacherJoints();
+	if attacherJoints ~= nil then
+		for _, attcherJointIter in pairs(attacherJoints) do
+			--print("jointType: " .. attcherJointIter.jointType);
+			if attcherJointIter.jointType == AttacherJoints.JOINTTYPE_ATTACHABLEFRONTLOADER or attcherJointIter.jointType == 9 or attcherJointIter.jointType == 5 or attcherJointIter.jointType == 14 or attcherJointIter.jointType == 4 or attcherJointIter.jointType == 10 then
+				frontLoaderDetected = true;
 			end;
-			__, eventName = InputBinding.registerActionEvent(g_inputBinding, actionName, self, FrontLoaderCam.onActionCall, toggleButton ,true ,false ,true)
+		end;
+	end;
+    
+	if frontLoaderDetected then
+		-- attach our actions
+		for _ ,actionName in pairs(FrontLoaderCam.actions) do
+			local __, eventName
+			if isOnActiveVehicle then
+				local toggleButton = false;
+				if actionName == "FrontLoaderCam_MoveCam" then
+					toggleButton = true;
+				end;
+				__, eventName = InputBinding.registerActionEvent(g_inputBinding, actionName, self, FrontLoaderCam.onActionCall, toggleButton ,true ,false ,true)
+			end
+			
+			if isSelected then
+				g_inputBinding.events[eventName].displayPriority = 1
+			elseif isOnActiveVehicle then
+				g_inputBinding.events[eventName].displayPriority = 3
+			end
 		end
 		
-		if isSelected then
-			g_inputBinding.events[eventName].displayPriority = 1
-		elseif isOnActiveVehicle then
-			g_inputBinding.events[eventName].displayPriority = 3
+		for _ ,actionName in pairs(FrontLoaderCam.ViewActions) do
+			local __, eventName
+			if isOnActiveVehicle then
+				__, eventName = InputBinding.registerActionEvent(g_inputBinding, actionName, self, FrontLoaderCam.onActionCall, true ,false ,true ,true)
+			end		
+			g_inputBinding:setActionEventTextVisibility(eventName, false)
 		end
-    end
-	
-	for _ ,actionName in pairs(FrontLoaderCam.ViewActions) do
-		local __, eventName
-		if isOnActiveVehicle then
-			__, eventName = InputBinding.registerActionEvent(g_inputBinding, actionName, self, FrontLoaderCam.onActionCall, true ,false ,true ,true)
-		end		
-	end
-	
+	end;	
   end
 end
 
@@ -93,25 +106,25 @@ function FrontLoaderCam:onActionCall(actionName, keyStatus, arg4, arg5, arg6)
 	end;
 
 	if actionName == "FrontLoaderCam_Toggle" then
-		if self.ad.cam == false then		
-			self.ad.cam = true;
+		if self.flc.cam == false then		
+			self.flc.cam = true;
 			self.storedCam = getCamera();		
 		else
-			self.ad.cam = false;
+			self.flc.cam = false;
 			self.restoreLastCam = true;			
 		end;
 	elseif actionName == "FrontLoaderCam_MoveCam" then
 		self.movingCam = not self.movingCam;	
 	elseif actionName == "AXIS_LOOK_UPDOWN_VEHICLE" then		
-		if self.ad.cam == true then
+		if self.flc.cam == true then
 			self.lastInputValues.upDown = keyStatus;
 		end;
 	elseif actionName == "AXIS_LOOK_LEFTRIGHT_VEHICLE" then		
-		if self.ad.cam == true then
+		if self.flc.cam == true then
 			self.lastInputValues.leftRight = keyStatus;
 		end;
 	elseif actionName == "AXIS_MOVE_FORWARD_PLAYER" then		
-		if self.ad.cam == true then
+		if self.flc.cam == true then
 			self.lastInputValues.translateUpDown = keyStatus;
 		end;
 	end;
@@ -120,24 +133,15 @@ end
 function FrontLoaderCam:onLeave()
 end;
 
-function init(self)
-	print("FrontLoaderCam init");
-	
+function init(self)	
 	self.lastInputValues =  {};
 	self.lastInputValues.upDown = 0;
 	self.lastInputValues.leftRight = 0;
 	self.movingCam = false;
-	self.frontLoaderCamOffsetY = 0;
+	self.frontLoaderCamOffsetY = 0;	
 	
-	--for i=1, 2 do
-       -- if self.cameras[i].isInside then    
-		--	self.internalCamera = Utils.indexToObject(self.components, self.camIndex);				
-		--end;
-	--end;
-	
-	self.bDisplay = 1; 
-	if self.ad == nil then
-		self.ad = {};
+	if self.flc == nil then
+		self.flc = {};
 	end;
 
 	self.storedCam = getCamera();
@@ -147,15 +151,8 @@ function init(self)
 	self.currentInput = "";
 
 	--if self.frontloaderAttacher ~= nil or self.typeDesc == "telehandler" then
-		if self.frontLoaderCam == nil then
-		
-			print("FrontLoaderCam init - create cam");
-			--DebugUtil.printTableRecursively(self, " . " , 0, 3);
-			
-			--DebugUtil.printTableRecursively(self:getAttacherJoints() , " . " , 0, 1); --vehicleType.specializationsByName.attacherJoints.
-			
-			
-			self.frontLoaderCam = createCamera("frontLoaderCam",  30, 0, 200);
+		if self.frontLoaderCam == nil then			
+			self.frontLoaderCam = createCamera("frontLoaderCam",  1.4, 0.02, 200);
 			local node = self.components[1].node
 			local nodeTool = nil;
 			
@@ -166,15 +163,11 @@ function init(self)
 			if attachedImplements ~= nil then
 				for _, implement in pairs(attachedImplements) do
 					if implement.object ~= nil then
-						print("FrontLoaderCam init - found implement: " .. implement.object.typeName);
 							if implement.object.typeName == "attachableFrontloader" then
-								print("Selected frontloader attachment as root node");
 								local attacherJoints = implement.object:getAttacherJoints();
 								
-								if attacherJoints ~= nil then
-								
-									print("Selected frontloader attachment[1] as root node");
-									nodeTool = attacherJoints[1].jointTransform; --implement.object.attacherJoints[1].jointTransform;
+								if attacherJoints ~= nil then								
+									nodeTool = attacherJoints[1].jointTransform;
 								end;
 							end;
 					end;
@@ -189,25 +182,19 @@ function init(self)
 			end;
 
 			link(node, self.frontLoaderCam);
-			rotate(self.frontLoaderCam,0,math.pi*0.84,math.pi);
+			rotate(self.frontLoaderCam,0,-math.pi*0.5,0);
 
 			local xW,yW,zW = getWorldTranslation(node);
 			local xTool,yTool,zTool = getWorldTranslation(nodeTool);
 			local xCam,yCam,zCam = getWorldTranslation(self.frontLoaderCam);
 
-			self.frontLoaderCamOffsetX = -0.9; --self.sizeWidth/2 - 0.8;
-			self.frontLoaderCamOffsetZ = -0.4; --self.sizeLength/2 - 1.0; -- -1.0
+			self.frontLoaderCamOffsetX = -1.57; 
+			self.frontLoaderCamOffsetZ = 0.33; 
 			
-			local x,y,z = worldToLocal(node,xTool+self.frontLoaderCamOffsetX,yTool+0.75,zTool+self.frontLoaderCamOffsetZ) --+self.ad.frontLoaderCamShift
+			local x,y,z = worldToLocal(node,xTool+self.frontLoaderCamOffsetX,yTool+0.75,zTool+self.frontLoaderCamOffsetZ)
 			setTranslation(self.frontLoaderCam,x,y,z);
-			--rotate(self.frontLoaderCam,self.ad.frontLoaderCamShiftAngle ,-self.ad.frontLoaderCamShiftSide,0);
-			--setCamera(self.frontLoaderCam);
-			self.ad.cam = false;
 			
-			print("x: " .. x .. " y: " .. y .. " z: " .. z);
-			print("xCam: " .. xCam .. " yCam: " .. yCam .. " zCam: " .. zCam);
-			print("frontLoaderCamOffsetX: " .. self.frontLoaderCamOffsetX .. " frontLoaderCamOffsetZ: " .. self.frontLoaderCamOffsetZ);
-				
+			self.flc.cam = false;				
 		end;
 	--end;
 	
@@ -234,7 +221,7 @@ function FrontLoaderCam:onUpdate(dt)
 	
 	if self == g_currentMission.controlledVehicle then
 		if self.frontLoaderCam ~= nil then		
-			if self.ad.cam == true then			
+			if self.flc.cam == true then			
 				local node = self.components[1].node
 				local nodeTool = node;
 				
@@ -278,11 +265,14 @@ function FrontLoaderCam:onUpdate(dt)
 				if self.lastInputValues.upDown ~= 0 then
 					if self.movingCam == false then
 						local value = self.lastInputValues.upDown * g_gameSettings:getValue(GameSettings.SETTING.CAMERA_SENSITIVITY) * 0.075;
-						pitch = pitch + value;
+						pitch = pitch - value;
 						self.lastInputValues.upDown = 0;
 					else
 						local value = self.lastInputValues.upDown * g_gameSettings:getValue(GameSettings.SETTING.CAMERA_SENSITIVITY) * 0.075;
-						self.frontLoaderCamOffsetZ = self.frontLoaderCamOffsetZ - value;
+
+						self.frontLoaderCamOffsetZ = self.frontLoaderCamOffsetZ + math.cos(yaw)*value;
+						self.frontLoaderCamOffsetX = self.frontLoaderCamOffsetX + math.sin(yaw)*value;						
+						
 						self.lastInputValues.upDown = 0;
 					end;
 				end;
@@ -290,11 +280,14 @@ function FrontLoaderCam:onUpdate(dt)
 				if self.lastInputValues.leftRight ~= 0 then
 					if self.movingCam == false then
 						local value = self.lastInputValues.leftRight * g_gameSettings:getValue(GameSettings.SETTING.CAMERA_SENSITIVITY) * 0.075;
-						yaw = yaw + value;
+						yaw = yaw - value;
 						self.lastInputValues.leftRight = 0;
 					else
 						local value = self.lastInputValues.leftRight * g_gameSettings:getValue(GameSettings.SETTING.CAMERA_SENSITIVITY) * 0.075;
-						self.frontLoaderCamOffsetX = self.frontLoaderCamOffsetX - value;
+						
+						self.frontLoaderCamOffsetX = self.frontLoaderCamOffsetX + math.cos(yaw)*value;
+						self.frontLoaderCamOffsetZ = self.frontLoaderCamOffsetZ - math.sin(yaw)*value;
+						
 						self.lastInputValues.leftRight = 0;
 					end;
 				end;
@@ -304,10 +297,16 @@ function FrontLoaderCam:onUpdate(dt)
 						self.lastInputValues.translateUpDown = 0;
 					else
 						local value = self.lastInputValues.translateUpDown * g_gameSettings:getValue(GameSettings.SETTING.CAMERA_SENSITIVITY) * 0.075;
+						
 						self.frontLoaderCamOffsetY = self.frontLoaderCamOffsetY - value;
+						
 						self.lastInputValues.translateUpDown = 0;
 					end;
 				end;
+				
+				self.frontLoaderCamOffsetX = MathUtil.clamp(-10, self.frontLoaderCamOffsetX, 10);
+				self.frontLoaderCamOffsetY = MathUtil.clamp(-10, self.frontLoaderCamOffsetY, 10);
+				self.frontLoaderCamOffsetZ = MathUtil.clamp(-10, self.frontLoaderCamOffsetZ, 10);
 				
 				setTranslation(self.frontLoaderCam,x+self.frontLoaderCamOffsetX,y + self.frontLoaderCamOffsetY, z+self.frontLoaderCamOffsetZ);				
 				setRotation(self.frontLoaderCam, pitch, yaw, roll);
