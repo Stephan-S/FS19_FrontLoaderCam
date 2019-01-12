@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8" standalone="no" ?>
-<modDesc descVersion="41">
+<modDesc descVersion="42">
     <author>Balu</author>
 	<title>
 		<en>FrontLoaderCam</en>
@@ -31,7 +31,7 @@ FLCam FrontLader Kamera bewegen: Gedrückt halten um die Frontlader Kamera auf d
 	   </de>
 	</description>
 	
-    <version>1.0.0.0</version>
+    <version>1.0.0.1</version>
 	
 	<multiplayer supported="true"/>  
 	

@@ -221,7 +221,7 @@ function init(self)
 		local entryExists = false;
 		local count = 0;
 		for _, vehicle in ipairs(g_currentMission.FrontLoaderCamSettings.registeredVehicles) do
-			if vehicle == self:getName():gsub("%s+", "") then
+			if vehicle == self:getName():gsub("%s+", ""):gsub("%.", "_") then
 				entryExists = true;
 			end;
 			count = count +1;
@@ -230,7 +230,7 @@ function init(self)
 		local roll;
 		local pitch;
 		local yaw;
-		local vName = self:getName():gsub("%s+", "");
+		local vName = self:getName():gsub("%s+", ""):gsub("%.", "_");
 		if not entryExists then
 			g_currentMission.FrontLoaderCamSettings.registeredVehicles[count+1] = vName;
 			g_currentMission.FrontLoaderCamSettings.registeredVehicleAttributes[vName] = {};
