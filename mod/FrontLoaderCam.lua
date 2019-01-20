@@ -6,7 +6,7 @@
 
 FrontLoaderCam = {};
 FrontLoaderCam = {};
-FrontLoaderCam.Version = "1.0.1";
+FrontLoaderCam.Version = "1.0.0.2";
 FrontLoaderCam.config_changed = false;
 FrontLoaderCam.actions             = { 'FrontLoaderCam_Toggle', 'FrontLoaderCam_MoveCam'}
 FrontLoaderCam.ViewActions             = { 'AXIS_LOOK_UPDOWN_VEHICLE', 'AXIS_LOOK_LEFTRIGHT_VEHICLE', 'AXIS_MOVE_FORWARD_PLAYER'}
