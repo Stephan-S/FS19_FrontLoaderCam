@@ -1,12 +1,5 @@
-
-
-
-
-
-
 FrontLoaderCam = {};
-FrontLoaderCam = {};
-FrontLoaderCam.Version = "1.0.0.2";
+FrontLoaderCam.Version = "1.0.0.0";
 FrontLoaderCam.config_changed = false;
 FrontLoaderCam.actions             = { 'FrontLoaderCam_Toggle', 'FrontLoaderCam_MoveCam'}
 FrontLoaderCam.ViewActions             = { 'AXIS_LOOK_UPDOWN_VEHICLE', 'AXIS_LOOK_LEFTRIGHT_VEHICLE', 'AXIS_MOVE_FORWARD_PLAYER'}
@@ -27,9 +20,7 @@ end;
 function FrontLoaderCam:loadMap(name)		
 end;
 
-function FrontLoaderCam.registerEventListeners(vehicleType)
-  --print("-> registerEventListeners ")
-    
+function FrontLoaderCam.registerEventListeners(vehicleType)    
   for _,n in pairs( { "onUpdate", "onRegisterActionEvents", "onDelete" } ) do
     SpecializationUtil.registerEventListener(vehicleType, n, FrontLoaderCam)
   end 
@@ -60,7 +51,6 @@ function FrontLoaderCam:onRegisterActionEvents(isSelected, isOnActiveVehicle)
 	local attacherJoints = self:getAttacherJoints();
 	if attacherJoints ~= nil then
 		for _, attcherJointIter in pairs(attacherJoints) do
-			--print("jointType: " .. attcherJointIter.jointType);
 			if attcherJointIter.jointType == AttacherJoints.JOINTTYPE_ATTACHABLEFRONTLOADER or attcherJointIter.jointType == 9 or attcherJointIter.jointType == 5 or attcherJointIter.jointType == 14 or attcherJointIter.jointType == 4 or attcherJointIter.jointType == 10 then
 				frontLoaderDetected = true;
 			end;
@@ -79,11 +69,13 @@ function FrontLoaderCam:onRegisterActionEvents(isSelected, isOnActiveVehicle)
 				__, eventName = InputBinding.registerActionEvent(g_inputBinding, actionName, self, FrontLoaderCam.onActionCall, toggleButton ,true ,false ,true)
 			end
 			
-			if isSelected then
-				g_inputBinding.events[eventName].displayPriority = 1
-			elseif isOnActiveVehicle then
-				g_inputBinding.events[eventName].displayPriority = 3
-			end
+			if g_inputBinding.events[eventName] ~= null then
+				if isSelected then
+					g_inputBinding.events[eventName].displayPriority = 1
+				elseif isOnActiveVehicle then
+					g_inputBinding.events[eventName].displayPriority = 3
+				end
+			end;
 		end
 		
 		for _ ,actionName in pairs(FrontLoaderCam.ViewActions) do
@@ -113,8 +105,7 @@ function FrontLoaderCam:onActionCall(actionName, keyStatus, arg4, arg5, arg6)
 			if self.spec_enterable ~= nil then
 				if self.spec_enterable.activeCamera ~= nil then
 					self.flc.lastCamIndex = self.spec_enterable.camIndex;
-					self.spec_enterable.activeCamera:onDeactivate();
-					--print("Deactivated camera");					
+					self.spec_enterable.activeCamera:onDeactivate();					
 				end;
 			end;			
 		else
@@ -166,11 +157,10 @@ function init(self)
 	self.storedCam = getCamera();
 	self.restoreLastCam = false;
 	
-	self.moduleInitialized = true;
+	self.flcModuleInitialized = true;
 	self.currentInput = "";
 
-	--if self.frontloaderAttacher ~= nil or self.typeDesc == "telehandler" then
-		if self.frontLoaderCam == nil then			
+	if self.frontLoaderCam == nil then			
 			self.frontLoaderCam = createCamera("frontLoaderCam",  1.4, 0.02, 200);
 			local node = self.components[1].node
 			local nodeTool = nil;
@@ -214,8 +204,7 @@ function init(self)
 			setTranslation(self.frontLoaderCam,x,y,z);
 			
 			self.flc.cam = false;				
-		end;
-	--end;
+	end;
 		
 	--register Vehicle in global array for savefile:
 	if g_currentMission.FrontLoaderCamSettings ~= nil then  
@@ -264,7 +253,7 @@ function FrontLoaderCam:keyEvent(unicode, sym, modifier, isDown)
 end; 
 
 function FrontLoaderCam:onUpdate(dt)
-	if self.moduleInitialized == nil then
+	if self.flcModuleInitialized == nil then
 		init(self);
 	end;	
 
@@ -305,8 +294,8 @@ function FrontLoaderCam:onUpdate(dt)
 				
 				if nodeTool == nil then
 					nodeTool = node;
-					self.frontLoaderCamOffsetX = self.sizeWidth/2; -- + 0.8;
-					self.frontLoaderCamOffsetZ = self.sizeLength/2 + 1.0; -- -1.0
+					self.frontLoaderCamOffsetX = self.sizeWidth/2;
+					self.frontLoaderCamOffsetZ = self.sizeLength/2 + 1.0;
 				else
 					xTool,yTool,zTool = getWorldTranslation(nodeTool);
 				end;
@@ -428,13 +417,10 @@ function FrontLoaderCam:angleBetween(vec1, vec2)
 end
 
 function mySelf(obj)
-  --return obj:getName();
   return " (rootNode: " .. obj.rootNode .. ", typeName: " .. obj.typeName .. ", typeDesc: " .. obj.typeDesc .. ")"
 end
 
 function FrontLoaderCam:writeConfig()
-  --print("-> writeConfig ");
-
   -- skip on dedicated servers
   if g_dedicatedServerInfo ~= nil then
     return
@@ -469,7 +455,7 @@ function FrontLoaderCam:writeConfig()
 		--write vehicle Attributes
 		local vehicleIndex = 1;
 		for _, vehicle in ipairs(g_currentMission.FrontLoaderCamSettings.registeredVehicles) do			
-			group = "vehicle.vehicle_" .. vehicleIndex; --vehicle:gsub("%s+", "")
+			group = "vehicle.vehicle_" .. vehicleIndex;
 			groupNameTag = string.format("FS19_FrontLoaderCamSettings.%s(%d)", group, 0) 
 			setXMLString(xml, groupNameTag .. "#vehicleName", vehicle:gsub("%s+", ""));
 			setXMLFloat(xml,  groupNameTag .. "#camOffsetX", g_currentMission.FrontLoaderCamSettings.registeredVehicleAttributes[vehicle].camOffsetX);
@@ -479,7 +465,6 @@ function FrontLoaderCam:writeConfig()
 			setXMLFloat(xml,  groupNameTag .. "#camPitch", g_currentMission.FrontLoaderCamSettings.registeredVehicleAttributes[vehicle].camPitch);
 			setXMLFloat(xml,  groupNameTag .. "#camYaw", g_currentMission.FrontLoaderCamSettings.registeredVehicleAttributes[vehicle].camYaw);
 			vehicleIndex = vehicleIndex + 1;
-			--print("--> wrote values for '"..vehicle.."'. x: ".. g_currentMission.FrontLoaderCamSettings.registeredVehicleAttributes[vehicle].camOffsetX ..", y: "..g_currentMission.FrontLoaderCamSettings.registeredVehicleAttributes[vehicle].camOffsetY..", z: "..g_currentMission.FrontLoaderCamSettings.registeredVehicleAttributes[vehicle].camOffsetZ);
 		end
 	end;
   
@@ -487,8 +472,6 @@ function FrontLoaderCam:writeConfig()
 end
 
 function FrontLoaderCam:readConfig()
-	--print("-> readConfig ")
-
 	-- skip on dedicated servers
 	if g_dedicatedServerInfo ~= nil then
 	return
@@ -520,7 +503,7 @@ function FrontLoaderCam:readConfig()
 		
 			local vehicleIndex = 1;
 			for _, vehicle in ipairs(g_currentMission.FrontLoaderCamSettings.registeredVehicles) do
-				group = "vehicle.vehicle_" .. vehicleIndex; --vehicle:gsub("%s+", "")
+				group = "vehicle.vehicle_" .. vehicleIndex;
 				groupNameTag = string.format("FS19_FrontLoaderCamSettings.%s(%d)", group, 0) 
 				vehicleName = getXMLString(xml, groupNameTag .. "#vehicleName");
 				if vehicleName ~= nil then
