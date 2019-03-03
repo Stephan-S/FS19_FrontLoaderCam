@@ -50,14 +50,14 @@ z - (Vorwärts, rückwärts):	Umschauen hoch, runter
 		<action name="FrontLoaderCam_MoveCam" 	category="VEHICLE"/>
 	</actions>
 	
-	<inputBindings>
+	<inputBinding>
 		<actionBinding action="FrontLoaderCam_Toggle">
-			<binding device="KB_MOUSE_DEFAULT" input="KEY_KP_9" />
+			<binding device="KB_MOUSE_DEFAULT" input="KEY_KP_9" index="1"/>
 		</actionBinding>
 		<actionBinding action="FrontLoaderCam_MoveCam">
-			<binding device="KB_MOUSE_DEFAULT" input="KEY_KP_7" />
+			<binding device="KB_MOUSE_DEFAULT" input="KEY_KP_7" index="1"/>
 		</actionBinding>
-	</inputBindings>
+	</inputBinding>
 	
 </modDesc>
 
